@@ -155,10 +155,26 @@
 	   (? 'v var?)
 	   (lambda (v) `(var ,v)))
 
-          ;--------------------define----------------not impl
-   
+          ;--------------------Disjunctions----------------implimented
+          (pattern-rule
+	   `(or . ,(? 'exprs))
+	   (lambda (exprs)
+	     `(or ,(map parse exprs))))
 
-          ;--------------------applications-----------not impl
+          ;--------------------Define----------------implimented
+          ;regular define
+          (pattern-rule
+	   `(define ,(? 'v (lambda (x) (not (pair? x)))) ,(? 'e))
+	   (lambda (v e)
+	     `(define ,`(var ,v) ,(parse e))))
+
+          ;MIT-style define
+          (pattern-rule
+	   `(define ,(? 'v pair?) . ,(? 'e))
+	   (lambda (v e)
+	     `(def ,`(var ,(car v)) ,(parse (append `(lambda ,(cdr v)) e))))) ;Didn't test waiting for lambda
+
+          ;--------------------applications-----------implimented
           (pattern-rule
            `(,(? 'proc (lambda (x) (not (reserved-word? x)))) . ,(? 'args)) ;maybe should change to reserved-symbol??
            (lambda (proc args)
