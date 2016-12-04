@@ -141,9 +141,9 @@
   (let ((run
 	 (compose-patterns
           ;---------------------const---------------not impl 
-	  (pattern-rule
-	   (? 'c simple-const?)
-	   (lambda (c) `(const ,c)))
+	  ;(pattern-rule
+	  ; (? 'c simple-const?)
+	  ; (lambda (c) `(const ,c)))
 
           ;---------------------quote---------------not impl
 	  (pattern-rule
@@ -154,6 +154,16 @@
 	  (pattern-rule
 	   (? 'v var?)
 	   (lambda (v) `(var ,v)))
+
+          ;--------------------define----------------not impl
+   
+
+          ;--------------------applications-----------not impl
+          (pattern-rule
+           `(,(? 'proc (lambda (x) (not (reserved-word? x)))) . ,(? 'args)) ;maybe should change to reserved-symbol??
+           (lambda (proc args)
+             `(applic ,(parse proc) ,(map parse args))))
+          
 
           ;---------------------if-----------------not impl
 	  (pattern-rule
@@ -182,4 +192,4 @@
       (run e
 	   (lambda ()
 	     (error 'parse
-		    (format "isn't implemented yet" e)))))))
+		    (format 'yet e)))))))
