@@ -109,6 +109,8 @@
 
 
 ;------------------------------LIOR------------------------------------------------------------------------
+(define void-object
+	(if #f #f))
 
 ;-------var----
 (define *reserved-words*
@@ -140,14 +142,45 @@
 (define parse
   (let ((run
 	 (compose-patterns
-          ;---------------------const---------------not impl 
-	  ;(pattern-rule
-	  ; (? 'c simple-const?)
-	  ; (lambda (c) `(const ,c)))
+          ;---------------------const---------------implimented 
 
-          ;---------------------quote---------------not impl
+          ;Nil---------------implimented
+          (pattern-rule
+	   (? 'c null?)
+	   (lambda (c) `(const '())))
+
+         ;void---------------implimented
+          (pattern-rule
+	   (? 'c (lambda (x) (equal? x void-object)))
+	   (lambda (c) `(const ,c)))
+          ;vector---------------implimented
+          (pattern-rule
+	   (? 'c vector?)
+	   (lambda (c) `(const ,c)))
+
+          ;quote---------------implimented
 	  (pattern-rule
 	   `(quote ,(? 'c))
+	   (lambda (c) `(const ,c)))
+
+          ;Boolean--------------implimented
+          (pattern-rule
+	   (? 'c boolean?)
+	   (lambda (c) `(const ,c)))
+
+          ;---------------------char--------------implimented
+          (pattern-rule
+	   (? 'c char?)
+	   (lambda (c) `(const ,c)))
+
+          ;---------------------number--------------implimented
+          (pattern-rule
+	   (? 'c number?)
+	   (lambda (c) `(const ,c)))
+
+          ;---------------------string--------------implimented
+          (pattern-rule
+	   (? 'c string?)
 	   (lambda (c) `(const ,c)))
 
           ;---------------------var-----------------implimented
@@ -155,11 +188,37 @@
 	   (? 'v var?)
 	   (lambda (v) `(var ,v)))
 
+          ;---------------------if-------------------implimented
+          ;if2
+          (pattern-rule
+	   `(if ,(? 'test) ,(? 'dit))
+	   (lambda (test dit)
+	     `(if3 ,(parse test) ,(parse dit) (const ,void-object))))
+          ;if3
+          (pattern-rule
+	   `(if ,(? 'test) ,(? 'dit) ,(? 'dif))
+	   (lambda (test dit dif)
+	     `(if3 ,(parse test) ,(parse dit) ,(parse dif))))
+
           ;--------------------Disjunctions----------------implimented
           (pattern-rule
 	   `(or . ,(? 'exprs))
 	   (lambda (exprs)
 	     `(or ,(map parse exprs))))
+
+          ;--------------------Lambda----------------not implimented
+          ;regular lambda
+          (pattern-rule
+	   `(lambda ,(? 'vs (lambda (x) (not (optional-lambda? x)))) . ,(? 'exprs))
+	   (lambda (vs exprs)
+	     (append `(lambda-simle ,vs) (map parse exprs))))
+
+          ;lambda optional
+          (pattern-rule
+	   `(lambda ,(? 'vs optional-lambda?) . ,(? 'exprs))
+	   (lambda (vs exprs)
+	     (append `(lambda-simle ,vs) (map parse exprs))))
+
 
           ;--------------------Define----------------implimented
           ;regular define
@@ -180,16 +239,6 @@
            (lambda (proc args)
              `(applic ,(parse proc) ,(map parse args))))
           
-
-          ;---------------------if-----------------not impl
-	  (pattern-rule
-	   `(if ,(? 'test) ,(? 'dit))
-	   (lambda (test dit)
-	     `(if ,(parse test) ,(parse dit) (const ,*void-object*))))
-	  (pattern-rule
-	   `(if ,(? 'test) ,(? 'dit) ,(? 'dif))
-	   (lambda (test dit dif)
-	     `(if ,(parse test) ,(parse dit) ,(parse dif))))
 
           ;---------------------let*-----------------not impl
 	  ;; let*
