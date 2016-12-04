@@ -127,6 +127,9 @@
     (and (symbol? v) (not (reserved-word? v)))
     ))
 
+(define optional-lambda?
+  (lambda (l) a));TODO!!!
+    
 
 
 
@@ -209,15 +212,21 @@
           ;--------------------Lambda----------------not implimented
           ;regular lambda
           (pattern-rule
-	   `(lambda ,(? 'vs (lambda (x) (not (optional-lambda? x)))) . ,(? 'exprs))
+	   `(lambda ,(? 'vs list? (lambda (x) (not (optional-lambda? x)))) . ,(? 'exprs))
 	   (lambda (vs exprs)
-	     (append `(lambda-simle ,vs) (map parse exprs))))
+	     (append `(lambda-simple ,vs) (map parse exprs))))
 
-          ;lambda optional
+          ;lambda optional----------------------------TODO!!!!
           (pattern-rule
 	   `(lambda ,(? 'vs optional-lambda?) . ,(? 'exprs))
 	   (lambda (vs exprs)
 	     (append `(lambda-simle ,vs) (map parse exprs))))
+
+          ;lambda variadic
+          (pattern-rule
+	   `(lambda ,(? 'args (lambda (x) (not (list? x)))) . ,(? 'exprs))
+	   (lambda (args exprs)
+	     (append `(lambda-var ,vs) (map parse exprs))))
 
 
           ;--------------------Define----------------implimented
