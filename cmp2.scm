@@ -242,11 +242,25 @@
 	   (lambda (v e)
 	     `(def ,`(var ,(car v)) ,(parse (append `(lambda ,(cdr v)) e))))) ;Didn't test waiting for lambda
 
+
+          ;--------------------Assignments----------------implimented
+          (pattern-rule
+	   `(set! ,(? 'v) ,(? 'e))
+	   (lambda (v e)
+	     `(set ,`(var ,v) ,(parse e))))
+
           ;--------------------applications-----------implimented
           (pattern-rule
            `(,(? 'proc (lambda (x) (not (reserved-word? x)))) . ,(? 'args)) ;maybe should change to reserved-symbol??
            (lambda (proc args)
              `(applic ,(parse proc) ,(map parse args))))
+
+
+          ;--------------------Sequences-----------implimented
+          (pattern-rule
+	   `(begin . ,(? 'seqs))
+	   (lambda (seqs)
+	     `(seq ,(map parse seqs))))
           
 
           ;---------------------let*-----------------not impl
@@ -260,7 +274,6 @@
 	   (lambda (var val rest exprs)
 	     (parse `(let ((,var ,val))
 		       (let* ,rest . ,exprs)))))
-	  ;; add more rules here
 	  )))
     (lambda (e)
       (run e
