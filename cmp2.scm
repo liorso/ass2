@@ -146,7 +146,11 @@
   (let ((run
 	 (compose-patterns
           ;---------------------const---------------implimented 
-
+          ;--------------------applications-----------implimented
+          (pattern-rule
+           `(,(? 'proc (lambda (x) (not (reserved-word? x)))) . ,(? 'args)) ;maybe should change to reserved-symbol??
+           (lambda (proc args)
+             `(applic ,(parse proc) ,(map parse args))))
           ;Nil---------------implimented
           (pattern-rule
 	   (? 'c null?)
@@ -212,21 +216,21 @@
           ;--------------------Lambda----------------not implimented
           ;regular lambda
           (pattern-rule
-	   `(lambda ,(? 'vs list? (lambda (x) (not (optional-lambda? x)))) . ,(? 'exprs))
+	   `(lambda ,(? 'vs) . ,(? 'exprs))
 	   (lambda (vs exprs)
 	     (append `(lambda-simple ,vs) (map parse exprs))))
 
           ;lambda optional----------------------------TODO!!!!
-          (pattern-rule
-	   `(lambda ,(? 'vs optional-lambda?) . ,(? 'exprs))
-	   (lambda (vs exprs)
-	     (append `(lambda-simle ,vs) (map parse exprs))))
+          ;(pattern-rule
+	  ; `(lambda ,(? 'vs optional-lambda?) . ,(? 'exprs))
+	  ; (lambda (vs exprs)
+	  ;   (append `(lambda-simle ,vs) (map parse exprs))))
 
           ;lambda variadic
-          (pattern-rule
-	   `(lambda ,(? 'args (lambda (x) (not (list? x)))) . ,(? 'exprs))
-	   (lambda (args exprs)
-	     (append `(lambda-var ,vs) (map parse exprs))))
+          ;(pattern-rule
+	  ; `(lambda ,(? 'args (lambda (x) (not (list? x)))) . ,(? 'exprs))
+	  ; (lambda (args exprs)
+	  ;   (append `(lambda-var ,vs) (map parse exprs))))
 
 
           ;--------------------Define----------------implimented
@@ -249,11 +253,7 @@
 	   (lambda (v e)
 	     `(set ,`(var ,v) ,(parse e))))
 
-          ;--------------------applications-----------implimented
-          (pattern-rule
-           `(,(? 'proc (lambda (x) (not (reserved-word? x)))) . ,(? 'args)) ;maybe should change to reserved-symbol??
-           (lambda (proc args)
-             `(applic ,(parse proc) ,(map parse args))))
+
 
 
           ;--------------------Sequences-----------implimented
@@ -261,12 +261,19 @@
 	   `(begin . ,(? 'seqs))
 	   (lambda (seqs)
 	     `(seq ,(map parse seqs))))
+
+;----------------------------------------------------------------------------------------------
+          ;---------------------let----------------implimented
+          (pattern-rule
+	   `(let ,(? 'def) . ,(? 'body))
+	   (lambda (def body)
+	     (parse `((lambda ,(map car def) ,@body) ,@(map cadr def)) )))
           
 
-          ;---------------------let*-----------------not impl
+          ;---------------------let*-----------------not impl - taken from Mayer 151
 	  ;; let*
 	  (pattern-rule
-	   `(let* () ,(? 'expr) . ,(? 'exprs list?))
+	   `(let* ,(? 'expr) . ,(? 'exprs list?))
 	   (lambda (expr exprs)
 	     (parse (beginify (cons expr exprs)))))
 	  (pattern-rule
@@ -274,6 +281,26 @@
 	   (lambda (var val rest exprs)
 	     (parse `(let ((,var ,val))
 		       (let* ,rest . ,exprs)))))
+
+          
+          ;---------------------and----------------not implimented ---TODO: last and
+          (pattern-rule
+	   `(and)
+	   (lambda ()
+	     (parse #t)))
+          (pattern-rule
+	   `(and ,(? 'con))
+	   (lambda (con)
+	     (parse con)))
+          (pattern-rule
+	   `(and ,(? 'con1) ,(? 'con2))
+	   (lambda (con1 con2)
+	     (parse `(if ,con1 ,con2 #f))))
+          (pattern-rule
+	   `(and . ,(? 'conses))
+	   (lambda (conses)
+	     `(if3 ,(parse (car conses)) ,(parse (and (cdr conses))) #f))) ;last and
+          
 	  )))
     (lambda (e)
       (run e
