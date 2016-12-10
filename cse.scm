@@ -17,11 +17,11 @@
 (define real-help-find-recuuring
   (lambda (first next)
     (if (or (quotedList? first) (not (pair? first)) (not (pair? next)) (null? next)) #f
-        (if (and (equal? first (car next))) first
+        (if (equal? first (car next)) first
             (or
-             (if (pair? (car next)) (real-help-find-recuuring first (car next)) #f)
              (real-help-find-recuuring first (cdr next))
-             (ormap (lambda (deep-first) (real-help-find-recuuring deep-first next)) first)
+             (if (pair? (car next)) (real-help-find-recuuring first (car next)) #f)        
+             (ormap (lambda (deep-first) (real-help-find-recuuring deep-first next)) first)            
              )))
     ))
 
@@ -80,10 +80,24 @@
 
 
 ;------------------------------main
+(define remove-dupe
+  (lambda (l)
+    (if (null? l) '()
+        (cons (car l) (remove-dupe (filter (lambda (x) (not (equal? x (car l)))) 
+                                    (cdr l)))))
+    ))
+
+(define reverseList
+  (lambda (l)
+    (if (null? l) '()
+     (append (reverseList (cdr l)) (list (car l))))
+    ))
+
 (define cse
   (lambda (e)
-    (begin (define recurring (find-recurring e))
-           (map find-recurring recurring)
-           (if recurring (cse (compose-let e recurring));todo
-               e))
-    ))
+    (begin (define recurring (reverseList (remove-dupe (find-recurring e))))
+           (display recurring)
+           ;(if (null? recurring) e
+           ;    (cse (compose-let e recurring));todo
+           ;    ))
+    )))
