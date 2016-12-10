@@ -145,12 +145,12 @@
 (define parse
   (let ((run
 	 (compose-patterns
-          ;---------------------const---------------implimented 
           ;--------------------applications-----------implimented
           (pattern-rule
            `(,(? 'proc (lambda (x) (not (reserved-word? x)))) . ,(? 'args)) ;maybe should change to reserved-symbol??
            (lambda (proc args)
              `(applic ,(parse proc) ,(map parse args))))
+          ;---------------------const---------------implimented 
           ;Nil---------------implimented
           (pattern-rule
 	   (? 'c null?)
