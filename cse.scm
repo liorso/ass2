@@ -31,10 +31,25 @@
         
     ))
 
+(define change-rec
+  (lambda (e recurring new-sym)
+    (if (or (not (pair? e)) (null? e)) (list)
+        (if (equal? recurring (car e)) `(,new-sym ,@(change-rec (cdr e) recurring new-sym))
+            (if (pair? (car e)) `(,(change-rec (car e) recurring new-sym) ,@(change-rec (cdr e) recurring new-sym))
+                `(,(car e) ,@(change-rec (cdr e) recurring new-sym)))))
+    ))
+        
+
+(define compose-let
+  (lambda (e recurring)
+    (begin (define new-sym (gensym)) ; Maybe problematic to use "new-sym"
+           `(let* ([,new-sym ,recurring]) ,(change-rec e recurring new-sym)))
+    ))
+
 (define cse
   (lambda (e)
     (begin (define recurring (find-recurring e))
-           (if recurring #f;todo
+           (if recurring (cse (compose-let e recurring));todo
                e))
     ))
 
