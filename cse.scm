@@ -12,7 +12,6 @@
 	   (lambda ()
 	     #f)))))
 
-;TODO ignore quoted.
 (define help-find-recuuring
   (lambda (first next)
     (if (or (quotedList? first) (not (pair? first)) (not (pair? next)) (null? next)) #f
@@ -25,15 +24,18 @@
 
 (define find-recurring
   (lambda (e)
-    (if (help-find-recuuring (car e) (cdr e)) (help-find-recuuring (car e) (cdr e))
-        (if (null? (cddr e)) #f
-            (find-recurring (cdr e))))
+    (begin (define recurring (help-find-recuuring (car e) (cdr e)))
+           (if recurring recurring
+               (if (null? (cddr e)) #f
+                   (find-recurring (cdr e)))))
         
     ))
 
 (define cse
   (lambda (e)
-    (find-recurring e)
+    (begin (define recurring (find-recurring e))
+           (if recurring #f;todo
+               e))
     ))
 
 
