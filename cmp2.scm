@@ -213,7 +213,7 @@
 	   (lambda (exprs)
 	     `(or ,(map parse exprs))))
 
-          ;--------------------Lambda----------------not implimented
+          ;--------------------Lambda----------------not implimented----daniel
           ;regular lambda
           (pattern-rule
 	   `(lambda ,(? 'vs) . ,(? 'exprs))
