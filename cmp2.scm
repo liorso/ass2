@@ -137,9 +137,19 @@
 ;--------------------------------From guide 2015 --------------------------------------------------------------------
 
 
+;------------------------ FROM MAYERS 2017 2 SUNDAY LECTURE-------------------------------------
 
+(define identify-lambda
+            (lambda (argl ret-simple ret-opt ret-var)
+		(cond 
+			((null? argl) (ret-simple '()))
+			((var? argl) (ret-var argl))      ;;;TODO: var?
+			(else (identify-lambda (cdr argl)
+					(lambda (s) (ret-simple `(,(car argl) ,@s))) ;simple
+					(lambda (s opt) (ret-opt `(,(car argl) ,@s) opt)) ;opt
+					(lambda (var) (ret-opt `(,(car argl)) var)))))))
 
-
+;-------------------------------------------------------------------------------------------------
 
 
 (define parse
@@ -214,13 +224,25 @@
 	     `(or ,(map parse exprs))))
 
           ;--------------------Lambda----------------not implimented----daniel
+
+
+          
+
+          (patern-rule
+           `(lambda ,(? 'args ))
+           (identify-lambda args
+                            (lambda (s) `(lambda-simple ,(map parse args)))
+                            (lambda (s opt) `((required ,(map parse s)) (opt ,(map parse opt))))
+                            (lambda (var) `(lambda-var ,(map parse var))))
+          
           ;regular lambda
-          (pattern-rule
-	   `(lambda ,(? 'vs) . ,(? 'exprs))
-	   (lambda (vs exprs)
-	     (append `(lambda-simple ,vs) (map parse exprs))))
+          ;(pattern-rule
+	  ; `(lambda ,(? 'vs) . ,(? 'exprs))
+	  ; (lambda (vs exprs)
+	  ;   (append `(lambda-simple ,vs) (map parse exprs))))
 
           ;lambda optional----------------------------TODO!!!!
+          
           ;(pattern-rule
 	  ; `(lambda ,(? 'vs optional-lambda?) . ,(? 'exprs))
 	  ; (lambda (vs exprs)
