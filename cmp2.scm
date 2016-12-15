@@ -223,17 +223,17 @@
 	   (lambda (exprs)
 	     `(or ,(map parse exprs))))
 
-          ;--------------------Lambda----------------not implimented----daniel
+          ;--------------------Lambda----------------implimented----daniel
 
 
           
 
-          (patern-rule
-           `(lambda ,(? 'args )exprs)
-           (identify-lambda args
-                            (lambda (s) `(lambda-simple ,(map parse args) ,(`(seq ,(map parse exprs)))))
-                            (lambda (s opt) `((required ,(map parse s)) (opt ,(map parse opt))),(`(seq ,(map parse exprs))))
-                            (lambda (var) `(lambda-var ,(map parse var))),(`(seq ,(map parse exprs)))))
+;          (patern-rule
+;           `(lambda ,(? 'args )exprs)
+;           (identify-lambda args
+;                            (lambda (s) `(lambda-simple ,(map parse args) ,(`(seq ,(map parse exprs)))))
+;                            (lambda (s opt) `((required ,(map parse s)) (opt ,(map parse opt))),(`(seq ,(map parse exprs))))
+;                            (lambda (var) `(lambda-var ,(map parse var))),(`(seq ,(map parse exprs)))))
           
           ;regular lambda
           ;(pattern-rule
