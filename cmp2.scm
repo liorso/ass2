@@ -129,6 +129,19 @@
 
 (define optional-lambda?
   (lambda (l) a));TODO!!!
+
+;-----seq-----
+(define seq-delete
+  (lambda (seq)
+    (if (null? seq) seq
+        (if (equal? 'seq (car seq)) (seq-delete (cdr seq))
+            (if (pair? (car seq)) (append (seq-delete (car seq)) (seq-delete (cdr seq)))
+                 (list (car seq) (list (seq-delete (cdr seq)))))))))
+
+(define pre-seq-delete
+  (lambda (seq)
+    (if (equal? 'seq (caadr seq)) `(seq ,@(seq-delete (cdr seq)))
+        `(seq ,(seq-delete (cdr seq))))))
     
 
 
@@ -260,7 +273,8 @@
           (pattern-rule
 	   `(begin . ,(? 'seqs))
 	   (lambda (seqs)
-	     `(seq ,(map parse seqs))))
+             (if (= (length seqs) 1) (parse seqs)
+	     (pre-seq-delete `(seq ,@(map parse seqs))))))
 
 ;----------------------------------------------------------------------------------------------
           ;---------------------let----------------implimented
