@@ -143,7 +143,7 @@
             (lambda (argl ret-simple ret-opt ret-var)
 		(cond 
 			((null? argl) (ret-simple '()))
-			((var? argl) (ret-var argl))      ;;;TODO: var?
+			((var? argl) (ret-var argl))     
 			(else (identify-lambda (cdr argl)
 					(lambda (s) (ret-simple `(,(car argl) ,@s))) ;simple
 					(lambda (s opt) (ret-opt `(,(car argl) ,@s) opt)) ;opt
@@ -229,11 +229,11 @@
           
 
           (patern-rule
-           `(lambda ,(? 'args ))
+           `(lambda ,(? 'args )exprs)
            (identify-lambda args
-                            (lambda (s) `(lambda-simple ,(map parse args)))
-                            (lambda (s opt) `((required ,(map parse s)) (opt ,(map parse opt))))
-                            (lambda (var) `(lambda-var ,(map parse var))))
+                            (lambda (s) `(lambda-simple ,(map parse args) ,(`(seq ,(map parse exprs)))))
+                            (lambda (s opt) `((required ,(map parse s)) (opt ,(map parse opt))),(`(seq ,(map parse exprs))))
+                            (lambda (var) `(lambda-var ,(map parse var))),(`(seq ,(map parse exprs)))))
           
           ;regular lambda
           ;(pattern-rule
