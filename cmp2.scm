@@ -245,9 +245,9 @@
            `(lambda ,(? 'args ) ,(? 'exprs))
            (lambda (args exprs)
              (identify-lambda args
-                            (lambda (s) `(lambda-simple ,((map parse s)) (seq (,(map parse (map unbeginify exprs))))))
-                           (lambda (s opt) `(lambda-opt (,(map parse s)) ,(map parse opt) (seq (,(map parse (map unbeginify exprs))))))
-                            (lambda (var) `(lambda-var ,(map parse var) (seq (,(map parse (map unbeginify exprs))))))
+                            (lambda (s) `(lambda-simple ,(s) (seq (,(map parse (unbeginify exprs))))))
+                           (lambda (s opt) `(lambda-opt ,(s) ,(opt) (seq (,(map parse (unbeginify exprs))))))
+                            (lambda (var) `(lambda-var ,(var) (seq (,(map parse (unbeginify exprs))))))
           )))
 
 ;          (pattern-rule
@@ -301,9 +301,9 @@
 
           ;--------------------Sequences-----------implimented
           (pattern-rule
-	   `(begin . ,(? 'seqs))
+	   `(begin  . ,(? 'seqs))
 	   (lambda (seqs)
-	     `(seq ,(map parse (map unbeginify seqs)))))
+	     `(seq ,(map parse (unbeginify seqs)))))
 
 ;----------------------------------------------------------------------------------------------
           ;---------------------let----------------implimented
