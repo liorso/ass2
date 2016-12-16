@@ -149,8 +149,21 @@
 					(lambda (s opt) (ret-opt `(,(car argl) ,@s) opt)) ;opt
 					(lambda (var) (ret-opt `(,(car argl)) var)))))))
 
-;-------------------------------------------------------------------------------------------------
 
+
+;---------------------------------------unbeginigy daniel-----------------------------------------
+
+(define unbeginify
+	(lambda (s)
+          (if (null? s)
+              s
+             (if (list? (car s))
+              (if (equal? 'begin (caar s))
+                  `(,@(list-tail (car s) 1) ,@(unbeginify (cdr s)))
+                  `(,(car s) ,@(unbeginify (cdr s))))
+              `(,(car s) ,@(unbeginify (cdr s)))
+               ))))
+  
 
 (define parse
   (let ((run
@@ -228,12 +241,20 @@
 
           
 
-;          (patern-rule
-;           `(lambda ,(? 'args )exprs)
-;           (identify-lambda args
-;                            (lambda (s) `(lambda-simple ,(map parse args) ,(`(seq ,(map parse exprs)))))
-;                            (lambda (s opt) `((required ,(map parse s)) (opt ,(map parse opt))),(`(seq ,(map parse exprs))))
-;                            (lambda (var) `(lambda-var ,(map parse var))),(`(seq ,(map parse exprs)))))
+          (pattern-rule
+           `(lambda ,(? 'args ) ,(? 'exprs))
+           (lambda (args exprs)
+             (identify-lambda args
+                            (lambda (s) `(lambda-simple ,((map parse s)) (seq (,(map parse (map unbeginify exprs))))))
+                           (lambda (s opt) `(lambda-opt (,(map parse s)) ,(map parse opt) (seq (,(map parse (map unbeginify exprs))))))
+                            (lambda (var) `(lambda-var ,(map parse var) (seq (,(map parse (map unbeginify exprs))))))
+          )))
+
+;          (pattern-rule
+;	   `(lambda ,(? 'args) ,(? 'exprs))
+;	   (lambda (args exprs)
+;	     `(lambda ,(+ 3 5))))
+
           
           ;regular lambda
           ;(pattern-rule
@@ -282,7 +303,7 @@
           (pattern-rule
 	   `(begin . ,(? 'seqs))
 	   (lambda (seqs)
-	     `(seq ,(map parse seqs))))
+	     `(seq ,(map parse (map unbeginify seqs)))))
 
 ;----------------------------------------------------------------------------------------------
           ;---------------------let----------------implimented
@@ -329,3 +350,5 @@
 	   (lambda ()
 	     (error 'parse
 		    (format 'yet e)))))))
+
+(define parse-2 parse)
