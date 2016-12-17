@@ -359,7 +359,7 @@
                         (let* ,rest . ,exprs)))))
 
           
-           ;---------------------and----------------not implimented ---TODO: last and
+           ;---------------------and----------------implimented
            (pattern-rule
             `(and)
             (lambda ()
@@ -375,7 +375,7 @@
            (pattern-rule
             `(and . ,(? 'conses))
             (lambda (conses)
-              `(if3 ,(parse-2 (car conses)) ,(parse-2 (and (cdr conses))) #f))) ;last and
+              `(if3 ,(parse-2 (car conses)) ,(parse-2 `(and ,@(cdr conses))) ,(parse-2 #f))))
           
            )))
         (lambda (e)
