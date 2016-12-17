@@ -166,30 +166,19 @@
 
 ;---------------------------------------unbeginigy daniel-----------------------------------------
 
-(define unbeginify
-  (lambda (s)
-    (if (null? s)
-        s
-        (if (pair? s)
-            (if (list? (car s))
-                (if (eqv? 'begin (caar s))
-                    `(,@(list-tail (car s) 1) ,@(unbeginify (cdr s)))
-                    `(,(car s) ,@(unbeginify (cdr s))))
-                `(,(car s) ,@(unbeginify (cdr s)))
-                )
-            s))))
 
-(define unbeginify-flat1 ;;original flat
+
+
+(define unbeginify ;;original unbeginify
   (lambda (s)
     (if (null? s)
         s
         (if (pair? s)
             (if (list? (car s))
                 (if (eqv? 'begin (caar s))
-                    `(,@(list-tail (car s) 1) ,@(unbeginify (cdr s)))
+                    `(,@(unbeginify(list-tail (car s) 1)) ,@(unbeginify(cdr s)))
                     `(,(car s) ,@(unbeginify (cdr s))))
-                `(,(car s) ,@(unbeginify (cdr s)))
-                )
+                `(,(car s) ,@(unbeginify (cdr s))))
             s))))
 
 (define parse-2
