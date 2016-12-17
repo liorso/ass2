@@ -339,7 +339,7 @@
             (lambda (def body)
               (cond 
                 ((null? def) (parse-2 `((lambda () (begin ,@body)))))
-                ((null? (cdr def)) (display body) (parse-2 `(,`(lambda (,(caar def))
+                ((null? (cdr def)) (parse-2 `(,`(lambda (,(caar def))
                                                                ,(cond
                                                                   ((and (pair? (car body)) (pair? (caar body))) `(begin ,@(caar body)))
                                                                   ((pair? (car body)) `(begin ,@(car body)))
