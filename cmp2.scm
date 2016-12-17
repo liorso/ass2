@@ -277,30 +277,6 @@
                                   (lambda (var) `(lambda-var ,var ,(parse-2 (car exprs)))))
                                   )))
 
-           ;          (pattern-rule
-           ;	   `(lambda ,(? 'args) ,(? 'exprs))
-           ;	   (lambda (args exprs)
-           ;	     `(lambda ,(+ 3 5))))
-
-          
-           ;regular lambda
-           ;(pattern-rule
-           ; `(lambda ,(? 'vs) . ,(? 'exprs))
-           ; (lambda (vs exprs)
-           ;   (append `(lambda-simple ,vs) (map parse-2 exprs))))
-
-           ;lambda optional----------------------------TODO!!!!
-          
-           ;(pattern-rule
-           ; `(lambda ,(? 'vs optional-lambda?) . ,(? 'exprs))
-           ; (lambda (vs exprs)
-           ;   (append `(lambda-simle ,vs) (map parse-2 exprs))))
-
-           ;lambda variadic
-           ;(pattern-rule
-           ; `(lambda ,(? 'args (lambda (x) (not (list? x)))) . ,(? 'exprs))
-           ; (lambda (args exprs)
-           ;   (append `(lambda-var ,vs) (map parse-2 exprs))))
 
 
            ;--------------------Define----------------implimented
@@ -376,7 +352,14 @@
             `(and . ,(? 'conses))
             (lambda (conses)
               `(if3 ,(parse-2 (car conses)) ,(parse-2 `(and ,@(cdr conses))) ,(parse-2 #f))))
-          
+
+
+           (pattern-rule
+            `(quasiquote . ,(? 'exprs ))
+            (lambda (exprs)
+              (parse-2 (expand-qq (car exprs)))
+              ))
+           
            )))
         (lambda (e)
           (run e
