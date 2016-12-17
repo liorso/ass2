@@ -398,6 +398,7 @@
               (set! other (cdr onec))
               (cond
                 ((and (pair? (car first)) (equal? 'else (caar first))) (parse-2 (cadar first)))
+                ((equal? 'else (car first)) (parse-2 (cadr first)))
                 ((or (not (pair? other)) (null? other))  (parse-2 `(if ,(car first) ,(cadr first))))           
                 (else  (parse-2 `(if ,(car first) ,(cadr first) ,(if (equal? 'else (caar other)) (cadar other)
                                                                      `(cond ,other))))))))
@@ -406,6 +407,7 @@
             (lambda (first other)
               (cond
                 ((and (pair? (car first)) (equal? 'else (caar first))) (parse-2 (cadar first)))
+                ((equal? 'else (car first)) (parse-2 (cadr first)))
                 ((or (not (pair? other)) (null? other))  (parse-2 `(if ,(car first) ,(cadr first))))           
                 (else  (parse-2 `(if ,(car first) ,(cadr first) ,(if (equal? 'else (caar other)) (cadar other)
                                                                      `(cond ,other))))))))
