@@ -14,30 +14,41 @@
 	   (lambda ()
 	     #f)))))
 
+
+(define help-real
+  (lambda (first next)(if (or (quotedList? first) (not (pair? first)) (not (pair? next)) (null? next)) #f
+        (if (or (equal? first next) (equal? first (car next))) first
+            (or
+             (help-real first (cdr next))
+             (if (pair? (car next)) (help-real first (car next)) #f)                              
+             )))
+    ))
+
 (define real-help-find-recuuring
   (lambda (first next)
     (if (or (quotedList? first) (not (pair? first)) (not (pair? next)) (null? next)) #f
         (if (or (equal? first next) (equal? first (car next))) first
             (or
-             (real-help-find-recuuring first (cdr next))
-             (if (pair? (car next)) (real-help-find-recuuring first (car next)) #f)        
-             (ormap (lambda (deep-first) (real-help-find-recuuring deep-first next)) first)            
+             (help-real first (cdr next))
+             (if (pair? (car next)) (real-help-find-recuuring first (car next)) #f)
+             (ormap (lambda (deep-first) (real-help-find-recuuring deep-first next)) first)                                 
              )))
     ))
 
 (define help-find-recuuring
   (lambda (first next)
     (if (null? next) '()
-        (if (real-help-find-recuuring first (car next)) `(,(real-help-find-recuuring first (car next)) 
+        (if (real-help-find-recuuring first (car next))
+            `(,(real-help-find-recuuring first (car next)) 
                                                       ,@(help-find-recuuring first (cdr next))) 
                                                       (help-find-recuuring first (cdr next))))
     ))
 
 (define find-recurring
   (lambda (e)
-    (if (null? e) '()
+    (if (or (not (pair? e)) (null? e)) '()
          (append (help-find-recuuring (car e) (cdr e))
-                     (find-recurring (cdr e))))                     
+                     (find-recurring (car e)) (find-recurring (cdr e))))                     
     ))
 
 
@@ -122,7 +133,7 @@
         )))
 		
 ;--------------------------------------main
-(define cse
+(define cse-2
   (lambda (e)
     (begin (define recurring (remove-dupe (find-recurring e)))
 			(if (null? recurring) e	
@@ -138,6 +149,7 @@
                                           ,(change-body
                                             (map (lambda (x) (if (pair? x) (car x) x)) recurring-with-syms-changed) 
                                             (map (lambda (x) (if (pair? x) (cadr x) x)) recurring-with-syms-changed)
-                                            e)))
+                                            e))
+                                        recurring-with-syms-changed)
                          ))
     ))
