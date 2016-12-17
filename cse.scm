@@ -14,30 +14,41 @@
 	   (lambda ()
 	     #f)))))
 
+
+(define help-real
+  (lambda (first next)(if (or (quotedList? first) (not (pair? first)) (not (pair? next)) (null? next)) #f
+        (if (or (equal? first next) (equal? first (car next))) first
+            (or
+             (help-real first (cdr next))
+             (if (pair? (car next)) (help-real first (car next)) #f)                              
+             )))
+    ))
+
 (define real-help-find-recuuring
   (lambda (first next)
     (if (or (quotedList? first) (not (pair? first)) (not (pair? next)) (null? next)) #f
         (if (or (equal? first next) (equal? first (car next))) first
             (or
-             (real-help-find-recuuring first (cdr next))
-             (if (pair? (car next)) (real-help-find-recuuring first (car next)) #f)        
-             (ormap (lambda (deep-first) (real-help-find-recuuring deep-first next)) first)            
+             (help-real first (cdr next))
+             (if (pair? (car next)) (real-help-find-recuuring first (car next)) #f)
+             (ormap (lambda (deep-first) (real-help-find-recuuring deep-first next)) first)                                 
              )))
     ))
 
 (define help-find-recuuring
   (lambda (first next)
     (if (null? next) '()
-        (if (real-help-find-recuuring first (car next)) `(,(real-help-find-recuuring first (car next)) 
+        (if (real-help-find-recuuring first (car next))
+            `(,(real-help-find-recuuring first (car next)) 
                                                       ,@(help-find-recuuring first (cdr next))) 
                                                       (help-find-recuuring first (cdr next))))
     ))
 
 (define find-recurring
   (lambda (e)
-    (if (null? e) '()
+    (if (or (not (pair? e)) (null? e)) '()
          (append (help-find-recuuring (car e) (cdr e))
-                     (find-recurring (cdr e))))                     
+                     (find-recurring (car e)) (find-recurring (cdr e))))                     
     ))
 
 
@@ -93,12 +104,25 @@
         (rec-make-list-syms-curring (cdr syms) (cdr curring) `(,`(,(car syms) ,(car curring))))
     ))
 
+(define deep-member
+  (lambda (x lst)
+    (if (null? lst) #f
+        (if (equal? x (car lst)) x
+            (begin
+              (if (list? (car lst))
+                  (let ((r (deep-member x (car lst))))
+                    (if r
+                        r
+                        (deep-member x (cdr lst))))
+                  (deep-member x (cdr lst))))))
+        ))
+
 (define find-replace
   (lambda (sym first e)
     (cond
       ((not (pair? e)) e)
       ((equal? first e) sym)
-      ((member first e) `(,(find-replace sym first (car e)) ,@(find-replace sym first (cdr e))))
+      ((deep-member first e) `(,(find-replace sym first (car e)) ,@(find-replace sym first (cdr e))))
       ((null? (cdr e)) (list (find-replace sym first (car e))))
       (else e))
     ))
@@ -138,6 +162,7 @@
                                           ,(change-body
                                             (map (lambda (x) (if (pair? x) (car x) x)) recurring-with-syms-changed) 
                                             (map (lambda (x) (if (pair? x) (cadr x) x)) recurring-with-syms-changed)
-                                            e)))
+                                            e))
+                                        )
                          ))
     ))
