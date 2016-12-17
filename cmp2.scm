@@ -167,7 +167,12 @@
 ;---------------------------------------unbeginigy daniel-----------------------------------------
 
 
-
+(define beginify
+	(lambda (s)
+		(cond
+			((null? s) *void-object*)
+			((null? (cdr s)) (cdr s))
+			(else `(begin ,@s)))))
 
 (define unbeginify ;;original unbeginify
   (lambda (s)
