@@ -11,9 +11,9 @@
   (lambda (tag)
     (lambda (e)
       (and (pair? e)
-	   (eq? (car e) tag)
-	   (pair? (cdr e))
-	   (null? (cddr e))))))
+           (eq? (car e) tag)
+           (pair? (cdr e))
+           (null? (cddr e))))))
 
 (define quote? (^quote? 'quote))
 (define unquote? (^quote? 'unquote))
@@ -21,87 +21,87 @@
 
 (define const?
   (let ((simple-sexprs-predicates
-	 (list boolean? char? number? string?)))
+         (list boolean? char? number? string?)))
     (lambda (e)
       (or (ormap (lambda (p?) (p? e))
-		 simple-sexprs-predicates)
-	  (quote? e)))))
+                 simple-sexprs-predicates)
+          (quote? e)))))
 
 (define quotify
   (lambda (e)
     (if (or (null? e)
-	    (pair? e)
-	    (symbol? e)
-	    (vector? e))
-	`',e
-	e)))
+            (pair? e)
+            (symbol? e)
+            (vector? e))
+        `',e
+        e)))
 
 (define unquotify
   (lambda (e)
     (if (quote? e)
-	(cadr e)
-	e)))
+        (cadr e)
+        e)))
 
 (define const-pair?
   (lambda (e)
     (and (quote? e)
-	 (pair? (cadr e)))))
+         (pair? (cadr e)))))
 
 (define expand-qq
   (letrec ((expand-qq
-	    (lambda (e)
-	      (cond ((unquote? e) (cadr e))
-		    ((unquote-splicing? e)
-		     (error 'expand-qq
-		       "unquote-splicing here makes no sense!"))
-		    ((pair? e)
-		     (let ((a (car e))
-			   (b (cdr e)))
-		       (cond ((unquote-splicing? a)
-			      `(append ,(cadr a) ,(expand-qq b)))
-			     ((unquote-splicing? b)
-			      `(cons ,(expand-qq a) ,(cadr b)))
-			     (else `(cons ,(expand-qq a) ,(expand-qq b))))))
-		    ((vector? e) `(list->vector ,(expand-qq (vector->list e))))
-		    ((or (null? e) (symbol? e)) `',e)
-		    (else e))))
-	   (optimize-qq-expansion (lambda (e) (optimizer e (lambda () e))))
-	   (optimizer
-	    (compose-patterns
-	     (pattern-rule
-	      `(append ,(? 'e) '())
-	      (lambda (e) (optimize-qq-expansion e)))
-	     (pattern-rule
-	      `(append ,(? 'c1 const-pair?) (cons ,(? 'c2 const?) ,(? 'e)))
-	      (lambda (c1 c2 e)
-		(let ((c (quotify `(,@(unquotify c1) ,(unquotify c2))))
-		      (e (optimize-qq-expansion e)))
-		  (optimize-qq-expansion `(append ,c ,e)))))
-	     (pattern-rule
-	      `(append ,(? 'c1 const-pair?) ,(? 'c2 const-pair?))
-	      (lambda (c1 c2)
-		(let ((c (quotify (append (unquotify c1) (unquotify c2)))))
-		  c)))
-	     (pattern-rule
-	      `(append ,(? 'e1) ,(? 'e2))
-	      (lambda (e1 e2)
-		(let ((e1 (optimize-qq-expansion e1))
-		      (e2 (optimize-qq-expansion e2)))
-		  `(append ,e1 ,e2))))
-	     (pattern-rule
-	      `(cons ,(? 'c1 const?) (cons ,(? 'c2 const?) ,(? 'e)))
-	      (lambda (c1 c2 e)
-		(let ((c (quotify (list (unquotify c1) (unquotify c2))))
-		      (e (optimize-qq-expansion e)))
-		  (optimize-qq-expansion `(append ,c ,e)))))
-	     (pattern-rule
-	      `(cons ,(? 'e1) ,(? 'e2))
-	      (lambda (e1 e2)
-		(let ((e1 (optimize-qq-expansion e1))
-		      (e2 (optimize-qq-expansion e2)))
-		  (if (and (const? e1) (const? e2))
-		      (quotify (cons (unquotify e1) (unquotify e2)))
-		      `(cons ,e1 ,e2))))))))
+            (lambda (e)
+              (cond ((unquote? e) (cadr e))
+                    ((unquote-splicing? e)
+                     (error 'expand-qq
+                            "unquote-splicing here makes no sense!"))
+                    ((pair? e)
+                     (let ((a (car e))
+                           (b (cdr e)))
+                       (cond ((unquote-splicing? a)
+                              `(append ,(cadr a) ,(expand-qq b)))
+                             ((unquote-splicing? b)
+                              `(cons ,(expand-qq a) ,(cadr b)))
+                             (else `(cons ,(expand-qq a) ,(expand-qq b))))))
+                    ((vector? e) `(list->vector ,(expand-qq (vector->list e))))
+                    ((or (null? e) (symbol? e)) `',e)
+                    (else e))))
+           (optimize-qq-expansion (lambda (e) (optimizer e (lambda () e))))
+           (optimizer
+            (compose-patterns
+             (pattern-rule
+              `(append ,(? 'e) '())
+              (lambda (e) (optimize-qq-expansion e)))
+             (pattern-rule
+              `(append ,(? 'c1 const-pair?) (cons ,(? 'c2 const?) ,(? 'e)))
+              (lambda (c1 c2 e)
+                (let ((c (quotify `(,@(unquotify c1) ,(unquotify c2))))
+                      (e (optimize-qq-expansion e)))
+                  (optimize-qq-expansion `(append ,c ,e)))))
+             (pattern-rule
+              `(append ,(? 'c1 const-pair?) ,(? 'c2 const-pair?))
+              (lambda (c1 c2)
+                (let ((c (quotify (append (unquotify c1) (unquotify c2)))))
+                  c)))
+             (pattern-rule
+              `(append ,(? 'e1) ,(? 'e2))
+              (lambda (e1 e2)
+                (let ((e1 (optimize-qq-expansion e1))
+                      (e2 (optimize-qq-expansion e2)))
+                  `(append ,e1 ,e2))))
+             (pattern-rule
+              `(cons ,(? 'c1 const?) (cons ,(? 'c2 const?) ,(? 'e)))
+              (lambda (c1 c2 e)
+                (let ((c (quotify (list (unquotify c1) (unquotify c2))))
+                      (e (optimize-qq-expansion e)))
+                  (optimize-qq-expansion `(append ,c ,e)))))
+             (pattern-rule
+              `(cons ,(? 'e1) ,(? 'e2))
+              (lambda (e1 e2)
+                (let ((e1 (optimize-qq-expansion e1))
+                      (e2 (optimize-qq-expansion e2)))
+                  (if (and (const? e1) (const? e2))
+                      (quotify (cons (unquotify e1) (unquotify e2)))
+                      `(cons ,e1 ,e2))))))))
     (lambda (e)
       (optimize-qq-expansion
        (expand-qq e)))))
@@ -110,7 +110,7 @@
 
 ;------------------------------LIOR------------------------------------------------------------------------
 (define void-object
-	(if #f #f))
+  (if #f #f))
 
 ;-------var----
 (define *reserved-words*
@@ -150,174 +150,248 @@
 ;--------------------------------From guide 2015 --------------------------------------------------------------------
 
 
+;------------------------ FROM MAYERS 2017 2 SUNDAY LECTURE-------------------------------------
+
+(define identify-lambda
+  (lambda (argl ret-simple ret-opt ret-var)
+    (cond 
+      ((null? argl) (ret-simple '()))
+      ((var? argl) (ret-var argl))     
+      (else (identify-lambda (cdr argl)
+                             (lambda (s) (ret-simple `(,(car argl) ,@s))) ;simple
+                             (lambda (s opt) (ret-opt `(,(car argl) ,@s) opt)) ;opt
+                             (lambda (var) (ret-opt `(,(car argl)) var)))))))
 
 
 
+;---------------------------------------unbeginigy daniel-----------------------------------------
 
+(define unbeginify
+  (lambda (s)
+    (if (null? s)
+        s
+        (if (pair? s)
+            (if (list? (car s))
+                (if (eqv? 'begin (caar s))
+                    `(,@(list-tail (car s) 1) ,@(unbeginify (cdr s)))
+                    `(,(car s) ,@(unbeginify (cdr s))))
+                `(,(car s) ,@(unbeginify (cdr s)))
+                )
+            s))))
 
-(define parse
+(define unbeginify-flat1 ;;original flat
+  (lambda (s)
+    (if (null? s)
+        s
+        (if (pair? s)
+            (if (list? (car s))
+                (if (eqv? 'begin (caar s))
+                    `(,@(list-tail (car s) 1) ,@(unbeginify (cdr s)))
+                    `(,(car s) ,@(unbeginify (cdr s))))
+                `(,(car s) ,@(unbeginify (cdr s)))
+                )
+            s))))
+
+(define parse-2
   (let ((run
-	 (compose-patterns
+         (compose-patterns
           ;--------------------applications-----------implimented
           (pattern-rule
            `(,(? 'proc (lambda (x) (not (reserved-word? x)))) . ,(? 'args)) ;maybe should change to reserved-symbol??
            (lambda (proc args)
-             `(applic ,(parse proc) ,(map parse args))))
+             `(applic ,(parse-2 proc) ,(map parse-2 args))))
           ;---------------------const---------------implimented 
           ;Nil---------------implimented
           (pattern-rule
-	   (? 'c null?)
-	   (lambda (c) `(const '())))
+           (? 'c null?)
+           (lambda (c) `(const '())))
 
-         ;void---------------implimented
+          ;void---------------implimented
           (pattern-rule
-	   (? 'c (lambda (x) (equal? x void-object)))
-	   (lambda (c) `(const ,c)))
+           (? 'c (lambda (x) (equal? x void-object)))
+           (lambda (c) `(const ,c)))
           ;vector---------------implimented
           (pattern-rule
-	   (? 'c vector?)
-	   (lambda (c) `(const ,c)))
+           (? 'c vector?)
+           (lambda (c) `(const ,c)))
 
           ;quote---------------implimented
-	  (pattern-rule
-	   `(quote ,(? 'c))
-	   (lambda (c) `(const ,c)))
+          (pattern-rule
+           `(quote ,(? 'c))
+           (lambda (c) `(const ,c)))
 
           ;Boolean--------------implimented
           (pattern-rule
-	   (? 'c boolean?)
-	   (lambda (c) `(const ,c)))
+           (? 'c boolean?)
+           (lambda (c) `(const ,c)))
 
           ;---------------------char--------------implimented
           (pattern-rule
-	   (? 'c char?)
-	   (lambda (c) `(const ,c)))
+           (? 'c char?)
+           (lambda (c) `(const ,c)))
 
           ;---------------------number--------------implimented
           (pattern-rule
-	   (? 'c number?)
-	   (lambda (c) `(const ,c)))
+           (? 'c number?)
+           (lambda (c) `(const ,c)))
 
           ;---------------------string--------------implimented
           (pattern-rule
-	   (? 'c string?)
-	   (lambda (c) `(const ,c)))
+           (? 'c string?)
+           (lambda (c) `(const ,c)))
 
           ;---------------------var-----------------implimented
-	  (pattern-rule
-	   (? 'v var?)
-	   (lambda (v) `(var ,v)))
+          (pattern-rule
+           (? 'v var?)
+           (lambda (v) `(var ,v)))
 
           ;---------------------if-------------------implimented
           ;if2
           (pattern-rule
-	   `(if ,(? 'test) ,(? 'dit))
-	   (lambda (test dit)
-	     `(if3 ,(parse test) ,(parse dit) (const ,void-object))))
+           `(if ,(? 'test) ,(? 'dit))
+           (lambda (test dit)
+             `(if3 ,(parse-2 test) ,(parse-2 dit) (const ,void-object))))
           ;if3
           (pattern-rule
-	   `(if ,(? 'test) ,(? 'dit) ,(? 'dif))
-	   (lambda (test dit dif)
-	     `(if3 ,(parse test) ,(parse dit) ,(parse dif))))
+           `(if ,(? 'test) ,(? 'dit) ,(? 'dif))
+           (lambda (test dit dif)
+             `(if3 ,(parse-2 test) ,(parse-2 dit) ,(parse-2 dif))))
 
           ;--------------------Disjunctions----------------implimented
           (pattern-rule
-	   `(or . ,(? 'exprs))
-	   (lambda (exprs)
-	     `(or ,(map parse exprs))))
+           `(or . ,(? 'exprs))
+           (lambda (exprs)
+             (if (> (length exprs) 1)
+             `(or ,(map parse-2 exprs))
+             (if (= (length exprs) 1)
+             `,(parse-2 (car exprs))
+             `,(parse-2 `#f))
+             )))
 
-          ;--------------------Lambda----------------not implimented
-          ;regular lambda
-          (pattern-rule
-	   `(lambda ,(? 'vs) . ,(? 'exprs))
-	   (lambda (vs exprs)
-	     (append `(lambda-simple ,vs) (map parse exprs))))
-
-          ;lambda optional----------------------------TODO!!!!
-          ;(pattern-rule
-	  ; `(lambda ,(? 'vs optional-lambda?) . ,(? 'exprs))
-	  ; (lambda (vs exprs)
-	  ;   (append `(lambda-simle ,vs) (map parse exprs))))
-
-          ;lambda variadic
-          ;(pattern-rule
-	  ; `(lambda ,(? 'args (lambda (x) (not (list? x)))) . ,(? 'exprs))
-	  ; (lambda (args exprs)
-	  ;   (append `(lambda-var ,vs) (map parse exprs))))
+          ;--------------------Lambda----------------implimented----daniel
 
 
-          ;--------------------Define----------------implimented
-          ;regular define
-          (pattern-rule
-	   `(define ,(? 'v (lambda (x) (not (pair? x)))) ,(? 'e))
-	   (lambda (v e)
-	     `(define ,`(var ,v) ,(parse e))))
-
-          ;MIT-style define
-          (pattern-rule
-	   `(define ,(? 'v pair?) . ,(? 'e))
-	   (lambda (v e)
-	     `(def ,`(var ,(car v)) ,(parse (append `(lambda ,(cdr v)) e))))) ;Didn't test waiting for lambda
-
-
-          ;--------------------Assignments----------------implimented
-          (pattern-rule
-	   `(set! ,(? 'v) ,(? 'e))
-	   (lambda (v e)
-	     `(set ,`(var ,v) ,(parse e))))
-
-
-
-
-          ;--------------------Sequences-----------implimented
-          (pattern-rule
-	   `(begin . ,(? 'seqs))
-	   (lambda (seqs)
-             (if (= (length seqs) 1) (parse seqs)
-	     (pre-seq-delete `(seq ,@(map parse seqs))))))
-
-;----------------------------------------------------------------------------------------------
-          ;---------------------let----------------implimented
-          (pattern-rule
-	   `(let ,(? 'def) . ,(? 'body))
-	   (lambda (def body)
-	     (parse `((lambda ,(map car def) ,@body) ,@(map cadr def)) )))
           
 
-          ;---------------------let*-----------------not impl - taken from Mayer 151
-	  ;; let*
-	  (pattern-rule
-	   `(let* ,(? 'expr) . ,(? 'exprs list?))
-	   (lambda (expr exprs)
-	     (parse (beginify (cons expr exprs)))))
-	  (pattern-rule
-	   `(let* ((,(? 'var var?) ,(? 'val)) . ,(? 'rest)) . ,(? 'exprs))
-	   (lambda (var val rest exprs)
-	     (parse `(let ((,var ,val))
-		       (let* ,rest . ,exprs)))))
+          (pattern-rule
+           `(lambda ,(? 'args ) . ,(? 'exprs))
+           (lambda (args exprs)
+             (if (> (length exprs) 1)  
+                 (identify-lambda args
+                                  (lambda (s) `(lambda-simple ,s (seq (,@(map parse-2 (unbeginify exprs))))))
+                                  (lambda (s opt) `(lambda-opt ,s ,opt (seq (,@(map parse-2 (unbeginify exprs))))))
+                                  (lambda (var) `(lambda-var ,var (seq (,@(map parse-2 (unbeginify exprs))))))
+                                  )
+                 (identify-lambda args
+                                  (lambda (s) `(lambda-simple ,s ,(parse-2 (car exprs))))
+                                  (lambda (s opt) `(lambda-opt ,s ,opt ,(parse-2 (car exprs))))
+                                  (lambda (var) `(lambda-var ,var ,(parse-2 (car exprs)))))
+                                  )))
+
+           ;          (pattern-rule
+           ;	   `(lambda ,(? 'args) ,(? 'exprs))
+           ;	   (lambda (args exprs)
+           ;	     `(lambda ,(+ 3 5))))
 
           
-          ;---------------------and----------------not implimented ---TODO: last and
-          (pattern-rule
-	   `(and)
-	   (lambda ()
-	     (parse #t)))
-          (pattern-rule
-	   `(and ,(? 'con))
-	   (lambda (con)
-	     (parse con)))
-          (pattern-rule
-	   `(and ,(? 'con1) ,(? 'con2))
-	   (lambda (con1 con2)
-	     (parse `(if ,con1 ,con2 #f))))
-          (pattern-rule
-	   `(and . ,(? 'conses))
-	   (lambda (conses)
-	     `(if3 ,(parse (car conses)) ,(parse (and (cdr conses))) #f))) ;last and
+           ;regular lambda
+           ;(pattern-rule
+           ; `(lambda ,(? 'vs) . ,(? 'exprs))
+           ; (lambda (vs exprs)
+           ;   (append `(lambda-simple ,vs) (map parse-2 exprs))))
+
+           ;lambda optional----------------------------TODO!!!!
           
-	  )))
-    (lambda (e)
-      (run e
-	   (lambda ()
-	     (error 'parse
-		    (format 'yet e)))))))
+           ;(pattern-rule
+           ; `(lambda ,(? 'vs optional-lambda?) . ,(? 'exprs))
+           ; (lambda (vs exprs)
+           ;   (append `(lambda-simle ,vs) (map parse-2 exprs))))
+
+           ;lambda variadic
+           ;(pattern-rule
+           ; `(lambda ,(? 'args (lambda (x) (not (list? x)))) . ,(? 'exprs))
+           ; (lambda (args exprs)
+           ;   (append `(lambda-var ,vs) (map parse-2 exprs))))
+
+
+           ;--------------------Define----------------implimented
+           ;regular define
+           (pattern-rule
+            `(define ,(? 'v (lambda (x) (not (pair? x)))) ,(? 'e))
+            (lambda (v e)
+              `(def ,`(var ,v) ,(parse-2 e))))
+
+           ;MIT-style define
+           (pattern-rule
+            `(define ,(? 'v pair?) . ,(? 'e))
+            (lambda (v e)
+              `(def ,`(var ,(car v)) ,(parse-2 (append `(lambda ,(cdr v)) e))))) ;Didn't test waiting for lambda
+
+
+           ;--------------------Assignments----------------implimented
+           (pattern-rule
+            `(set! ,(? 'v) ,(? 'e))
+            (lambda (v e)
+              `(set ,`(var ,v) ,(parse-2 e))))
+
+
+
+
+           ;--------------------Sequences-----------implimented
+           (pattern-rule
+            `(begin  . ,(? 'seqs))
+            (lambda (seqs)
+              (if (> (length seqs) 1)
+                  `(seq ,(map parse-2 (unbeginify seqs)))
+                  (if (= (length seqs) 1)
+                      `,(parse-2 (car seqs))
+                      `,(parse-2 `,void-object)))))
+
+
+
+          
+           ;---------------------let----------------implimented
+           (pattern-rule
+            `(let ,(? 'def) . ,(? 'body))
+            (lambda (def body)
+              (parse-2 `((lambda ,(map car def) ,@body) ,@(map cadr def)) )))
+          
+
+           ;---------------------let*-----------------not impl - taken from Mayer 151
+           ;; let*
+           (pattern-rule
+            `(let* ,(? 'expr) . ,(? 'exprs list?))
+            (lambda (expr exprs)
+              (parse-2 (beginify (cons expr exprs)))))
+           (pattern-rule
+            `(let* ((,(? 'var var?) ,(? 'val)) . ,(? 'rest)) . ,(? 'exprs))
+            (lambda (var val rest exprs)
+              (parse-2 `(let ((,var ,val))
+                        (let* ,rest . ,exprs)))))
+
+          
+           ;---------------------and----------------not implimented ---TODO: last and
+           (pattern-rule
+            `(and)
+            (lambda ()
+              (parse-2 #t)))
+           (pattern-rule
+            `(and ,(? 'con))
+            (lambda (con)
+              (parse-2 con)))
+           (pattern-rule
+            `(and ,(? 'con1) ,(? 'con2))
+            (lambda (con1 con2)
+              (parse-2 `(if ,con1 ,con2 #f))))
+           (pattern-rule
+            `(and . ,(? 'conses))
+            (lambda (conses)
+              `(if3 ,(parse-2 (car conses)) ,(parse-2 (and (cdr conses))) #f))) ;last and
+          
+           )))
+        (lambda (e)
+          (run e
+               (lambda ()
+                 (error 'parse-2
+                        (format 'yet e)))))))
+
