@@ -328,18 +328,15 @@
             (lambda (def body)
               (parse-2 `((lambda ,(map car def) ,@body) ,@(map cadr def)))))
           
+           ;---------------------let*----------------not implimented TODO: seq
+           (pattern-rule
+            `(let* ,(? 'def) . ,(? 'body))
+            (lambda (def body)
+              (cond 
+                ((null? def) (parse-2 `((lambda () ,(car body)))))
+                ((null? (cdr def)) (parse-2 `((lambda (,(caar def)) ,@(car body)) ,(cadar def))))
+                (else (parse-2 `((lambda (,(caar def)) (let* ,(cdr def) ,body)) ,(cadar def)))))))
 
-           ;---------------------let*-----------------not impl - taken from Mayer 151
-           ;; let*
-           (pattern-rule
-            `(let* ,(? 'expr) . ,(? 'exprs list?))
-            (lambda (expr exprs)
-              (parse-2 (beginify (cons expr exprs)))))
-           (pattern-rule
-            `(let* ((,(? 'var var?) ,(? 'val)) . ,(? 'rest)) . ,(? 'exprs))
-            (lambda (var val rest exprs)
-              (parse-2 `(let ((,var ,val))
-                        (let* ,rest . ,exprs)))))
 
            ;---------------------letrec----------------implimented
            (pattern-rule
@@ -381,7 +378,7 @@
               ))
            
 
-           ;---------------------cond----------------not implimented
+           ;---------------------cond----------------not implimented TODO: seq
            
            (pattern-rule
             `(cond ,(? 'onec (lambda (x) (andmap pair? x))))
