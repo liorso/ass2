@@ -104,12 +104,25 @@
         (rec-make-list-syms-curring (cdr syms) (cdr curring) `(,`(,(car syms) ,(car curring))))
     ))
 
+(define deep-member
+  (lambda (x lst)
+    (if (null? lst) #f
+        (if (equal? x (car lst)) x
+            (begin
+              (if (list? (car lst))
+                  (let ((r (deep-member x (car lst))))
+                    (if r
+                        r
+                        (deep-member x (cdr lst))))
+                  (deep-member x (cdr lst))))))
+        ))
+
 (define find-replace
   (lambda (sym first e)
     (cond
       ((not (pair? e)) e)
       ((equal? first e) sym)
-      ((member first e) `(,(find-replace sym first (car e)) ,@(find-replace sym first (cdr e))))
+      ((deep-member first e) `(,(find-replace sym first (car e)) ,@(find-replace sym first (cdr e))))
       ((null? (cdr e)) (list (find-replace sym first (car e))))
       (else e))
     ))
@@ -133,7 +146,7 @@
         )))
 		
 ;--------------------------------------main
-(define cse-2
+(define cse
   (lambda (e)
     (begin (define recurring (remove-dupe (find-recurring e)))
 			(if (null? recurring) e	
@@ -150,6 +163,6 @@
                                             (map (lambda (x) (if (pair? x) (car x) x)) recurring-with-syms-changed) 
                                             (map (lambda (x) (if (pair? x) (cadr x) x)) recurring-with-syms-changed)
                                             e))
-                                        recurring-with-syms-changed)
+                                        )
                          ))
     ))
