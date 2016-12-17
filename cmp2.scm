@@ -166,30 +166,24 @@
 
 ;---------------------------------------unbeginigy daniel-----------------------------------------
 
-(define unbeginify
-  (lambda (s)
-    (if (null? s)
-        s
-        (if (pair? s)
-            (if (list? (car s))
-                (if (eqv? 'begin (caar s))
-                    `(,@(list-tail (car s) 1) ,@(unbeginify (cdr s)))
-                    `(,(car s) ,@(unbeginify (cdr s))))
-                `(,(car s) ,@(unbeginify (cdr s)))
-                )
-            s))))
 
-(define unbeginify-flat1 ;;original flat
+(define beginify
+	(lambda (s)
+		(cond
+			((null? s) *void-object*)
+			((null? (cdr s)) (cdr s))
+			(else `(begin ,@s)))))
+
+(define unbeginify ;;original unbeginify
   (lambda (s)
     (if (null? s)
         s
         (if (pair? s)
             (if (list? (car s))
                 (if (eqv? 'begin (caar s))
-                    `(,@(list-tail (car s) 1) ,@(unbeginify (cdr s)))
+                    `(,@(unbeginify(list-tail (car s) 1)) ,@(unbeginify(cdr s)))
                     `(,(car s) ,@(unbeginify (cdr s))))
-                `(,(car s) ,@(unbeginify (cdr s)))
-                )
+                `(,(car s) ,@(unbeginify (cdr s))))
             s))))
 
 (define parse-2
@@ -289,30 +283,6 @@
                                   (lambda (var) `(lambda-var ,var ,(parse-2 (car exprs)))))
                                   )))
 
-           ;          (pattern-rule
-           ;	   `(lambda ,(? 'args) ,(? 'exprs))
-           ;	   (lambda (args exprs)
-           ;	     `(lambda ,(+ 3 5))))
-
-          
-           ;regular lambda
-           ;(pattern-rule
-           ; `(lambda ,(? 'vs) . ,(? 'exprs))
-           ; (lambda (vs exprs)
-           ;   (append `(lambda-simple ,vs) (map parse-2 exprs))))
-
-           ;lambda optional----------------------------TODO!!!!
-          
-           ;(pattern-rule
-           ; `(lambda ,(? 'vs optional-lambda?) . ,(? 'exprs))
-           ; (lambda (vs exprs)
-           ;   (append `(lambda-simle ,vs) (map parse-2 exprs))))
-
-           ;lambda variadic
-           ;(pattern-rule
-           ; `(lambda ,(? 'args (lambda (x) (not (list? x)))) . ,(? 'exprs))
-           ; (lambda (args exprs)
-           ;   (append `(lambda-var ,vs) (map parse-2 exprs))))
 
 
            ;--------------------Define----------------implimented
@@ -389,6 +359,15 @@
             (lambda (conses)
               `(if3 ,(parse-2 (car conses)) ,(parse-2 `(and ,@(cdr conses))) ,(parse-2 #f))))
 
+        ;--------------------QQ------------------------------------
+
+           (pattern-rule
+            `(quasiquote . ,(? 'exprs ))
+            (lambda (exprs)
+              (parse-2 (expand-qq (car exprs)))
+              ))
+           
+
            ;---------------------cond----------------not implimented
            
            (pattern-rule
@@ -412,6 +391,7 @@
                 (else  (parse-2 `(if ,(car first) ,(cadr first) ,(if (equal? 'else (caar other)) (cadar other)
                                                                      `(cond ,other))))))))
          
+
            )))
         (lambda (e)
           (run e
