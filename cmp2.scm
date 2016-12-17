@@ -186,6 +186,11 @@
                 `(,(car s) ,@(unbeginify (cdr s))))
             s))))
 
+(define find-begin
+  (lambda (x)
+    (if (not (pair? (car x))) `(begin ,@x)
+        (find-begin (car x)))))
+
 
 (define parse-2
   (let ((run
@@ -333,8 +338,12 @@
             `(let* ,(? 'def) . ,(? 'body))
             (lambda (def body)
               (cond 
-                ((null? def) (parse-2 `((lambda () ,(car body)))))
-                ((null? (cdr def)) (parse-2 `((lambda (,(caar def)) ,@(car body)) ,(cadar def))))
+                ((null? def) (parse-2 `((lambda () (begin ,@body)))))
+                ((null? (cdr def)) (display body) (parse-2 `(,`(lambda (,(caar def))
+                                                               ,(cond
+                                                                  ((and (pair? (car body)) (pair? (caar body))) `(begin ,@(caar body)))
+                                                                  ((pair? (car body)) `(begin ,@(car body)))
+                                                                  (else `(begin ,@body)))) ,(cadar def))))
                 (else (parse-2 `((lambda (,(caar def)) (let* ,(cdr def) ,body)) ,(cadar def)))))))
 
 
@@ -388,8 +397,8 @@
               (cond
                 ((and (pair? (car first)) (equal? 'else (caar first))) (parse-2 (cadar first)))
                 ((equal? 'else (car first)) (parse-2 (cadr first)))
-                ((or (not (pair? other)) (null? other))  (parse-2 `(if ,(car first) ,(cadr first))))           
-                (else  (parse-2 `(if ,(car first) ,(cadr first) ,(if (equal? 'else (caar other)) (cadar other)
+                ((or (not (pair? other)) (null? other)) (parse-2 `(if ,(car first) (begin ,@(cdr first)))))           
+                (else  (parse-2 `(if ,(car first)  (begin ,@(cdr first)) ,(if (equal? 'else (caar other)) `(begin ,@(cdar other))
                                                                      `(cond ,other))))))))
            (pattern-rule
             `(cond ,(? 'first) . ,(? 'other))
@@ -397,8 +406,8 @@
               (cond
                 ((and (pair? (car first)) (equal? 'else (caar first))) (parse-2 (cadar first)))
                 ((equal? 'else (car first)) (parse-2 (cadr first)))
-                ((or (not (pair? other)) (null? other))  (parse-2 `(if ,(car first) ,(cadr first))))           
-                (else  (parse-2 `(if ,(car first) ,(cadr first) ,(if (equal? 'else (caar other)) (cadar other)
+                ((or (not (pair? other)) (null? other)) (parse-2 `(if ,(car first) (begin ,@(cdr first)))))           
+                (else  (parse-2 `(if ,(car first) (begin ,@(cdr first)) ,(if (equal? 'else (caar other)) `(begin ,@(cdar other))
                                                                      `(cond ,other))))))))
          
 
