@@ -186,6 +186,7 @@
                 `(,(car s) ,@(unbeginify (cdr s))))
             s))))
 
+
 (define parse-2
   (let ((run
          (compose-patterns
@@ -339,6 +340,18 @@
             (lambda (var val rest exprs)
               (parse-2 `(let ((,var ,val))
                         (let* ,rest . ,exprs)))))
+
+           ;---------------------letrec----------------implimented
+           (pattern-rule
+            `(letrec ,(? 'def) . ,(? 'body))
+            (letrec ((make-letrec (lambda (syms vals)
+                                    (if (null? syms) syms
+                                        (if (null? (cdr syms)) `((set! ,(car syms) ,(car vals)))
+                                            `(,`(set! ,(car syms) ,(car vals)) ,@(make-letrec (cdr syms) (cdr vals))))))))
+                (lambda (def body)
+                  (parse-2 `((lambda ,(map car def) 
+                               (begin ,@(make-letrec (map car def) (map cadr def)) ((lambda () ,@body)))) 
+                               ,@(map (lambda (x) #f) def))))))
 
           
            ;---------------------and----------------implimented
