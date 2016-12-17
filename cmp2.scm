@@ -195,6 +195,7 @@
 (define parse-2
   (let ((run
          (compose-patterns
+
           ;--------------------applications-----------implimented
           (pattern-rule
            `(,(? 'proc (lambda (x) (not (reserved-word? x)))) . ,(? 'args)) ;maybe should change to reserved-symbol??
@@ -354,7 +355,7 @@
            (pattern-rule
             `(let ,(? 'def) . ,(? 'body))
             (lambda (def body)
-              (parse-2 `((lambda ,(map car def) ,@body) ,@(map cadr def)) )))
+              (parse-2 `((lambda ,(map car def) ,@body) ,@(map cadr def)))))
           
 
            ;---------------------let*-----------------not impl - taken from Mayer 151
@@ -387,7 +388,28 @@
             `(and . ,(? 'conses))
             (lambda (conses)
               `(if3 ,(parse-2 (car conses)) ,(parse-2 `(and ,@(cdr conses))) ,(parse-2 #f))))
-          
+
+           ;---------------------cond----------------not implimented
+           
+           (pattern-rule
+            `(cond ,(? 'onec (lambda (x) (andmap pair? x))))
+            (lambda (onec)
+              (set! first (car onec))
+              (set! other (cdr onec))
+              (cond
+                ((and (pair? (car first)) (equal? 'else (caar first))) (parse-2 (cadar first)))
+                ((or (not (pair? other)) (null? other))  (parse-2 `(if ,(car first) ,(cadr first))))           
+                (else  (parse-2 `(if ,(car first) ,(cadr first) ,(if (equal? 'else (caar other)) (cadar other)
+                                                                     `(cond ,other))))))))
+           (pattern-rule
+            `(cond ,(? 'first) . ,(? 'other))
+            (lambda (first other)
+              (cond
+                ((and (pair? (car first)) (equal? 'else (caar first))) (parse-2 (cadar first)))
+                ((or (not (pair? other)) (null? other))  (parse-2 `(if ,(car first) ,(cadr first))))           
+                (else  (parse-2 `(if ,(car first) ,(cadr first) ,(if (equal? 'else (caar other)) (cadar other)
+                                                                     `(cond ,other))))))))
+         
            )))
         (lambda (e)
           (run e
