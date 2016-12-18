@@ -2,7 +2,7 @@
 ;;; A naive, one-level quasiquote implementation + optimizations
 ;;;
 ;;; Programmer: Mayer Goldberg, 2016
-
+(load "compiler1.scm")
 (load "pattern-matcher.scm")
 
 ;;;
@@ -108,7 +108,7 @@
 
 
 
-;------------------------------LIOR------------------------------------------------------------------------
+;------------------------------------------------------------------------------------------------------
 (define void-object
   (if #f #f))
 
@@ -127,8 +127,6 @@
     (and (symbol? v) (not (reserved-word? v)))
     ))
 
-(define optional-lambda?
-  (lambda (l) a));TODO!!!
 
 ;-----seq-----
 (define seq-delete
@@ -147,11 +145,6 @@
 
 
 
-;--------------------------------From guide 2015 --------------------------------------------------------------------
-
-
-;------------------------ FROM MAYERS 2017 2 SUNDAY LECTURE-------------------------------------
-
 (define identify-lambda
   (lambda (argl ret-simple ret-opt ret-var)
     (cond 
@@ -164,7 +157,7 @@
 
 
 
-;---------------------------------------unbeginigy daniel-----------------------------------------
+;---------------------------------------unbeginigy----------------------------------------
 
 
 (define beginify
@@ -185,12 +178,6 @@
                     `(,(car s) ,@(unbeginify (cdr s))))
                 `(,(car s) ,@(unbeginify (cdr s))))
             s))))
-
-(define find-begin
-  (lambda (x)
-    (if (not (pair? (car x))) `(begin ,@x)
-        (find-begin (car x)))))
-
 
 (define parse-2
   (let ((run
@@ -333,18 +320,14 @@
             (lambda (def body)
               (parse-2 `((lambda ,(map car def) ,@body) ,@(map cadr def)))))
           
-           ;---------------------let*----------------not implimented TODO: seq
+           ;---------------------let*----------------implimented
            (pattern-rule
             `(let* ,(? 'def) . ,(? 'body))
             (lambda (def body)
               (cond 
                 ((null? def) (parse-2 `((lambda () (begin ,@body)))))
-                ((null? (cdr def)) (parse-2 `(,`(lambda (,(caar def))
-                                                               ,(cond
-                                                                  ((and (pair? (car body)) (pair? (caar body))) `(begin ,@(caar body)))
-                                                                  ((pair? (car body)) `(begin ,@(car body)))
-                                                                  (else `(begin ,@body)))) ,(cadar def))))
-                (else (parse-2 `((lambda (,(caar def)) (let* ,(cdr def) ,body)) ,(cadar def)))))))
+                ((null? (cdr def)) (parse-2 `(,`(lambda (,(caar def)) (begin ,@body)) ,(cadar def))))
+                (else (parse-2 `((lambda (,(caar def)) (let* ,(cdr def) ,@body)) ,(cadar def)))))))
 
 
            ;---------------------letrec----------------implimented
