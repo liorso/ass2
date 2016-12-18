@@ -2,7 +2,7 @@
 ;;; A naive, one-level quasiquote implementation + optimizations
 ;;;
 ;;; Programmer: Mayer Goldberg, 2016
-;(load "compiler1.scm")
+(load "compiler1.scm")
 (load "pattern-matcher.scm")
 
 ;;;
@@ -179,12 +179,6 @@
                 `(,(car s) ,@(unbeginify (cdr s))))
             s))))
 
-(define find-begin
-  (lambda (x)
-    (if (or (not (= 1 (length x))) (not (pair? (car x)))) `(begin ,@x)
-        (find-begin (car x)))))
-
-
 (define parse-2
   (let ((run
          (compose-patterns
@@ -332,8 +326,8 @@
             (lambda (def body)
               (cond 
                 ((null? def) (parse-2 `((lambda () (begin ,@body)))))
-                ((null? (cdr def)) (parse-2 `(,`(lambda (,(caar def)) ,(find-begin body)) ,(cadar def))))
-                (else (parse-2 `((lambda (,(caar def)) (let* ,(cdr def) ,body)) ,(cadar def)))))))
+                ((null? (cdr def)) (parse-2 `(,`(lambda (,(caar def)) (begin ,@body)) ,(cadar def))))
+                (else (parse-2 `((lambda (,(caar def)) (let* ,(cdr def) ,@body)) ,(cadar def)))))))
 
 
            ;---------------------letrec----------------implimented
